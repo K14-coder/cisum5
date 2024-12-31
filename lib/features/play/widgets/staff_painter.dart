@@ -21,38 +21,62 @@ class StaffPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
 
-    // Draw notes on the staff
-    final textStyle = TextStyle(color: Colors.black, fontSize: 16);
+    // Draw the clef symbol (treble clef for now, as a placeholder)
+    _drawTrebleClef(canvas, topMargin, lineHeight);
+
+    // Draw the time signature (4/4)
+    _drawTimeSignature(canvas, topMargin, lineHeight);
+
+    // Draw notes grouped into measures
+    double xOffset = 80; // Leave space for clef and time signature
+    for (int i = 0; i < notes.length; i++) {
+      final pitch = notes[i]['pitch'] ?? 'C4';
+      final duration = notes[i]['duration'] ?? '1';
+
+      // Map pitch to vertical position
+      double yOffset = _getNoteYOffset(pitch, topMargin, staffHeight, lineHeight);
+
+      // Draw the note
+      canvas.drawCircle(Offset(xOffset, yOffset), 8, paint);
+
+      // Increment xOffset for the next note
+      xOffset += noteSpacing;
+
+      // Draw a barline after every 4 notes (measure)
+      if ((i + 1) % 4 == 0 && i != notes.length - 1) {
+        _drawBarline(canvas, xOffset - (noteSpacing / 2), topMargin, staffHeight);
+      }
+    }
+  }
+
+  void _drawTrebleClef(Canvas canvas, double topMargin, double lineHeight) {
+    final paint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    // Draw a placeholder treble clef symbol
+    canvas.drawOval(Rect.fromLTWH(20, topMargin + lineHeight, 30, lineHeight * 2), paint);
+  }
+
+  void _drawTimeSignature(Canvas canvas, double topMargin, double lineHeight) {
+    final textStyle = TextStyle(color: Colors.black, fontSize: 18);
     final textPainter = TextPainter(
+      text: TextSpan(text: '4/4', style: textStyle),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     );
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(60, topMargin + lineHeight));
+  }
 
-    double xOffset = 0;
+  void _drawBarline(Canvas canvas, double x, double topMargin, double staffHeight) {
+    final paint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 1.5;
 
-    for (var note in notes) {
-      final pitch = note['pitch'] ?? 'C4'; // Default pitch if missing
-      final duration = note['duration'] ?? '1';
-
-      // Map pitch to vertical position on the staff
-      double yOffset = _getNoteYOffset(pitch, topMargin, staffHeight, lineHeight);
-
-      // Draw the note as a filled circle
-      canvas.drawCircle(Offset(xOffset + noteSpacing, yOffset), 8, paint);
-
-      // Draw duration text below the note
-      textPainter.text = TextSpan(
-        text: duration,
-        style: textStyle,
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(xOffset + noteSpacing - textPainter.width / 2, yOffset + 20),
-      );
-
-      xOffset += noteSpacing; // Increment horizontal spacing for next note
-    }
+    // Draw the barline from the top to the bottom of the staff
+    canvas.drawLine(Offset(x, topMargin), Offset(x, topMargin + staffHeight), paint);
   }
 
   double _getNoteYOffset(
