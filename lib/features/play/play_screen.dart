@@ -3,7 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io'; // For file operations
 import 'package:xml/xml.dart'; // For parsing MusicXML files
 import 'package:archive/archive_io.dart'; // For handling .mxl files
-import 'widgets/note_display_widget.dart';
+import 'widgets/staff_painter.dart';
 
 class PlayScreen extends StatefulWidget {
   @override
@@ -87,9 +87,9 @@ class _PlayScreenState extends State<PlayScreen> {
               ? note.findElements('duration').first
               : null;
 
-          final pitch = pitchElement != null ? pitchElement.text : 'No pitch data';
+          final pitch = pitchElement != null ? pitchElement.text : 'C4';
           final duration =
-          durationElement != null ? durationElement.text : 'No duration data';
+          durationElement != null ? durationElement.text : '1';
 
           return {'pitch': pitch, 'duration': duration};
         }).toList();
@@ -130,7 +130,10 @@ class _PlayScreenState extends State<PlayScreen> {
             // Display parsed MusicXML data
             Expanded(
               child: parsedNotes.isNotEmpty
-                  ? NoteDisplayWidget(notes: parsedNotes) // Use the custom widget
+                  ? CustomPaint(
+                size: Size(1000, 200), // Define the size of the staff
+                painter: StaffPainter(notes: parsedNotes),
+              )
                   : Center(child: Text('MusicXML data will appear here')),
             ),
           ],
