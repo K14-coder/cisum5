@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io'; // For file operations
 import 'package:xml/xml.dart'; // For parsing MusicXML files
 import 'package:archive/archive_io.dart'; // For handling .mxl files
+import 'widgets/note_display_widget.dart';
 
 class PlayScreen extends StatefulWidget {
   @override
@@ -11,7 +12,7 @@ class PlayScreen extends StatefulWidget {
 
 class _PlayScreenState extends State<PlayScreen> {
   String? filePath; // To store the selected file path
-  XmlDocument? musicXmlData; // To store parsed MusicXML data
+  List<Map<String, String>> parsedNotes = []; // To store parsed notes
 
   // Function to pick and parse a MusicXML or MXL file
   Future<void> pickFile() async {
@@ -74,9 +75,26 @@ class _PlayScreenState extends State<PlayScreen> {
     try {
       debugPrint('Parsing XML Content:\n$xmlContent'); // Log the XML content being parsed
       final document = XmlDocument.parse(xmlContent); // Parse the XML
+      final notes = document.findAllElements('note'); // Find all <note> elements
+
+      // Extract pitch and duration from notes
       setState(() {
-        musicXmlData = document; // Store the parsed data
+        parsedNotes = notes.map((note) {
+          final pitchElement = note.findElements('pitch').isNotEmpty
+              ? note.findElements('pitch').first
+              : null;
+          final durationElement = note.findElements('duration').isNotEmpty
+              ? note.findElements('duration').first
+              : null;
+
+          final pitch = pitchElement != null ? pitchElement.text : 'No pitch data';
+          final duration =
+          durationElement != null ? durationElement.text : 'No duration data';
+
+          return {'pitch': pitch, 'duration': duration};
+        }).toList();
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("MusicXML Parsed Successfully!")),
       );
@@ -111,39 +129,8 @@ class _PlayScreenState extends State<PlayScreen> {
             SizedBox(height: 16), // Add some spacing
             // Display parsed MusicXML data
             Expanded(
-              child: musicXmlData != null
-                  ? ListView(
-                children: musicXmlData!.findAllElements('note').isEmpty
-                    ? [
-                  Center(
-                    child: Text(
-                      'No <note> elements found in the MusicXML file.',
-                      style: TextStyle(color: Colors.red, fontSize: 16),
-                    ),
-                  ),
-                ]
-                    : musicXmlData!.findAllElements('note').map((note) {
-                  // Attempt to extract pitch and duration
-                  final pitchElement = note.findElements('pitch').isNotEmpty
-                      ? note.findElements('pitch').first
-                      : null;
-                  final durationElement = note.findElements('duration').isNotEmpty
-                      ? note.findElements('duration').first
-                      : null;
-
-                  final pitch = pitchElement != null
-                      ? pitchElement.text
-                      : 'No pitch data';
-                  final duration = durationElement != null
-                      ? durationElement.text
-                      : 'No duration data';
-
-                  return ListTile(
-                    title: Text('Pitch: $pitch'),
-                    subtitle: Text('Duration: $duration'),
-                  );
-                }).toList(),
-              )
+              child: parsedNotes.isNotEmpty
+                  ? NoteDisplayWidget(notes: parsedNotes) // Use the custom widget
                   : Center(child: Text('MusicXML data will appear here')),
             ),
           ],
