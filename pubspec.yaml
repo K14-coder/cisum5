@@ -32,6 +32,7 @@ dependencies:
     sdk: flutter
   file_picker: ^5.2.3 # For file selection
   xml: ^6.2.1         # For parsing MusicXML
+  archive: ^3.3.7
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
